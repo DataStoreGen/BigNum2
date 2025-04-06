@@ -139,11 +139,11 @@ end
 
 function BigNum.pow(val1, val2): BigNum
 	val1, val2 = BigNum.convert(val1), BigNum.convert(val2)
-	local man1, exp1 = val1[1], val1[2]
-	local man2, exp2 = val2[1], val2[2]
-	local man = man1^man2
-	local exp = exp1*10^exp2*man2
-	return BigNum.new(man ,exp)
+	local lg10 = math.log10(val1[1]+val1[2])
+	local exp = val2[1]*10^val2[2]
+	local lg2 = lg10*exp
+	local man = 10^(lg2%1)
+	return BigNum.new(man, lg2)
 end
 
 function BigNum.log(val1, val2): BigNum
@@ -281,7 +281,7 @@ function BigNum.short(val, digits, canComma: boolean?): string
 	local SNumber1: number, SNumber: number = val[1], val[2]
 	local leftover = math.fmod(SNumber, 3)
 	SNumber = math.floor(SNumber / 3)-1
-	if SNumber <= -1 then return tostring(BigNum.showDigits(SNumber1^leftover, digits)) end	
+	if SNumber <= -1 then return tostring(BigNum.showDigits(SNumber1 * (10^leftover), digits)) end	
 	local FirBigNumOnes: {string} = {"", "U","D","T","Qd","Qn","Sx","Sp","Oc","No"}
 	local SecondOnes: {string} = {"", "De","Vt","Tg","qg","Qg","sg","Sg","Og","Ng"}
 	local ThirdOnes: {string} = {"", "Ce", "Du","Tr","Qa","Qi","Se","Si","Ot","Ni"}
@@ -290,15 +290,15 @@ function BigNum.short(val, digits, canComma: boolean?): string
 		if SNumber == 0 or SNumber == 1 then
 			return BigNum.AddComma(val)
 		elseif SNumber == 2 then
-			return tostring(BigNum.showDigits(SNumber1^leftover, digits)) .. "b"
+			return tostring(BigNum.showDigits(SNumber1 * (10^leftover), digits)) .. "b"
 		end
 	else
 		if SNumber == 0 then
-			return tostring(BigNum.showDigits(SNumber1^leftover, digits)) .. "k"
+			return tostring(BigNum.showDigits(SNumber1 * (10^leftover), digits)) .. "k"
 		elseif SNumber == 1 then 
-			return tostring(BigNum.showDigits(SNumber1^leftover, digits)) .. "m"
+			return tostring(BigNum.showDigits(SNumber1 * (10^leftover), digits)) .. "m"
 		elseif SNumber == 2 then
-			return tostring(BigNum.showDigits(SNumber1^leftover, digits)) .. "b"
+			return tostring(BigNum.showDigits(SNumber1 * (10^leftover), digits)) .. "b"
 		end
 	end
 	local txt: string = ""
@@ -330,7 +330,7 @@ function BigNum.short(val, digits, canComma: boolean?): string
 	end
 	if SNumber < 1000 then
 		suffixpart(SNumber)
-		return tostring(BigNum.showDigits(SNumber1^leftover, digits)) .. txt
+		return tostring(BigNum.showDigits(SNumber1 * (10^leftover), digits)) .. txt
 	end
 	for i=#MultOnes,0,-1 do
 		if SNumber >= 10^(i*3) then
@@ -339,7 +339,7 @@ function BigNum.short(val, digits, canComma: boolean?): string
 			SNumber = math.fmod(SNumber, 10^(i*3))
 		end
 	end
-	return tostring(BigNum.showDigits(SNumber1^leftover, digits)) .. txt
+	return tostring(BigNum.showDigits(SNumber1 * (10^leftover), digits)) .. txt
 end
 
 function BigNum.shortE(val, digits): string
@@ -354,14 +354,13 @@ function BigNum.shortE(val, digits): string
 		return (first[one+1] or '') .. (second[ten+1] or '') .. (third[hun+1] or '')
 	end
 	local man, exp = val[1], val[2]
-	exp = math.floor(exp)
-	local lf = math.fmod(exp, 3)
+	local lf = math.fmod(math.floor(exp), 3)
 	local index = 0
 	while exp >= 1e3 do
 		exp/=1e3
 		index +=1
 	end
-	man = BigNum.showDigits(man^lf, digits)
+	man = BigNum.showDigits(man*10^lf, digits)
 	if index == 1 then
 		return man .. 'e' .. exp .. 'k'
 	elseif index == 2 then
@@ -517,6 +516,12 @@ function BigNum.buy1(cost, pow): BigNum
 	return  BigNum.mul(cost, pow)
 end
 
--- u can do the rest for buy5 and others
+function BigNum.buy5(cost, pow): BigNum
+	return BigNum.mul(cost, BigNum.pow(pow, 5))
+end
+
+function BigNum.buy10(cost, pow): BigNum
+	return BigNum.mul(cost, BigNum.pow10(pow))
+end
 
 return BigNum
