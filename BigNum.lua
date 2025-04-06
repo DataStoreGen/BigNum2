@@ -105,6 +105,7 @@ function BigNum.sub(val1, val2): BigNum
 		exp1 = exp2
 	end
 	local man, exp = man1-man2, exp1
+	if man < 0 then return {0, 0} end
 	return BigNum.new(man ,exp)
 end
 
@@ -273,7 +274,8 @@ function BigNum.showDigits(val, digits: number?): number
 	return math.floor(val*10^digits) / 10^digits
 end
 
-function BigNum.short(val, digits): string
+function BigNum.short(val, digits, canComma: boolean?): string
+	canComma = canComma or false
 	val = BigNum.convert(val)
 	local SNumber1: number, SNumber: number = val[1], val[2]
 	local leftover = math.fmod(SNumber, 3)
@@ -283,13 +285,20 @@ function BigNum.short(val, digits): string
 	local SecondOnes: {string} = {"", "De","Vt","Tg","qg","Qg","sg","Sg","Og","Ng"}
 	local ThirdOnes: {string} = {"", "Ce", "Du","Tr","Qa","Qi","Se","Si","Ot","Ni"}
 	local MultOnes: {string} = {"", "Mi","Mc","Na","Pi","Fm","At","Zp","Yc", "Xo", "Ve", "Me", "Due", "Tre", "Te", "Pt", "He", "Hp", "Oct", "En", "Ic", "Mei", "Dui", "Tri", "Teti", "Pti", "Hei", "Hp", "Oci", "Eni", "Tra","TeC","MTc","DTc","TrTc","TeTc","PeTc","HTc","HpT","OcT","EnT","TetC","MTetc","DTetc","TrTetc","TeTetc","PeTetc","HTetc","HpTetc","OcTetc","EnTetc","PcT","MPcT","DPcT","TPCt","TePCt","PePCt","HePCt","HpPct","OcPct","EnPct","HCt","MHcT","DHcT","THCt","TeHCt","PeHCt","HeHCt","HpHct","OcHct","EnHct","HpCt","MHpcT","DHpcT","THpCt","TeHpCt","PeHpCt","HeHpCt","HpHpct","OcHpct","EnHpct","OCt","MOcT","DOcT","TOCt","TeOCt","PeOCt","HeOCt","HpOct","OcOct","EnOct","Ent","MEnT","DEnT","TEnt","TeEnt","PeEnt","HeEnt","HpEnt","OcEnt","EnEnt","Hect", "MeHect"}
-
-	if SNumber == 0 then
-		return tostring(BigNum.showDigits(SNumber * 10^leftover, digits)) .. "k"
-	elseif SNumber == 1 then
-		return tostring(BigNum.showDigits(SNumber * 10^leftover, digits)) .. "m"
-	elseif SNumber == 2 then
-		return tostring(BigNum.showDigits(SNumber * 10^leftover, digits)) .. "b"
+	if canComma then
+		if SNumber == 0 or SNumber == 1 then
+			return BigNum.AddComma(val)
+		elseif SNumber == 2 then
+			return tostring(BigNum.showDigits(SNumber1 * 10^leftover, digits)) .. "b"
+		end
+	else
+		if SNumber == 0 then
+			return tostring(BigNum.showDigits(SNumber1 * 10^leftover, digits)) .. "k"
+		elseif SNumber == 1 then 
+			return tostring(BigNum.showDigits(SNumber1 * 10^leftover, digits)) .. "m"
+		elseif SNumber == 2 then
+			return tostring(BigNum.showDigits(SNumber1 * 10^leftover, digits)) .. "b"
+		end
 	end
 	local txt: string = ""
 	local function suffixpart(n: number)
@@ -320,7 +329,7 @@ function BigNum.short(val, digits): string
 	end
 	if SNumber < 1000 then
 		suffixpart(SNumber)
-		return tostring(BigNum.showDigits(SNumber * 10^leftover, digits)) .. txt
+		return tostring(BigNum.showDigits(SNumber1 * 10^leftover, digits)) .. txt
 	end
 	for i=#MultOnes,0,-1 do
 		if SNumber >= 10^(i*3) then
@@ -329,7 +338,7 @@ function BigNum.short(val, digits): string
 			SNumber = math.fmod(SNumber, 10^(i*3))
 		end
 	end
-	return tostring(BigNum.showDigits(SNumber * 10^leftover, digits)) .. txt
+	return tostring(BigNum.showDigits(SNumber1 * 10^leftover, digits)) .. txt
 end
 
 function BigNum.shortE(val, digits): string
@@ -346,11 +355,11 @@ function BigNum.shortE(val, digits): string
 	local man, exp = val[1], val[2]
 	local lf = math.fmod(exp, 3)
 	local index = 0
-	while exp >= 1000 do
-		exp/=1000
-		index+=1
-	end
 	exp = math.floor(exp)
+	while exp >= 1e3 do
+		exp/=1e3
+		index +=1
+	end
 	man = BigNum.showDigits(man * 10^lf, digits)
 	if index == 1 then
 		return man .. 'e' .. exp .. 'k'
@@ -362,11 +371,29 @@ function BigNum.shortE(val, digits): string
 	return man .. 'e' .. exp ..suffixPart(index)
 end
 
-function BigNum.fshort(val, digit): string
-	if BigNum.between(val, 0, 1) then
-		return '1/' .. BigNum.short(BigNum.div(1, val), digit)
+function BigNum.HyperE(val): string
+	val = BigNum.convert(val)
+	local man, exp = val[1], val[2]
+	if math.fmod(exp, 1000) then
+		local newExp = math.floor(math.log10(exp))
+		exp /=10^newExp
+		return man .. 'e' .. exp .. 'e' .. newExp
 	end
-	return BigNum.short(val, digit)
+	return man ..'e' .. exp
+end
+
+function BigNum.AddComma(val): string
+	val = BigNum.toNumber(BigNum.convert(val))
+	local left, num, right = tostring(val):match('^([^%d]*%d)(%d*)(.-)$')
+	num = num:reverse():gsub('(%d%d%d)', '%1,')
+	return left .. num:reverse() .. right
+end
+
+function BigNum.fshort(val, digit, canComma: boolean?): string
+	if BigNum.between(val, 0, 1) then
+		return '1/' .. BigNum.short(BigNum.div(1, val), digit, canComma)
+	end
+	return BigNum.short(val, digit, canComma)
 end
 
 function BigNum.fshortE(val, digit): string
@@ -381,6 +408,13 @@ function BigNum.fLetter(val, digit): string
 		return '1/' .. BigNum.letterShort(BigNum.div(1, val), digit)
 	end
 	return BigNum.letterShort(val, digit)
+end
+
+function BigNum.fHyperE(val): string
+	if BigNum.between(val, 0, 1) then
+		return '1/' .. BigNum.HyperE(BigNum.div(1, val))
+	end
+	return BigNum.HyperE(val)
 end
 
 function BigNum.TimeTracker(value): string
@@ -434,6 +468,28 @@ end
 
 function BigNum.pow10(val1): BigNum
 	return BigNum.pow(val1, 10)
+end
+
+function BigNum.lbencode(val): number
+	val = BigNum.convert(val)
+	local a = BigNum.add({1, val[2]}, 1)
+	if a[2] ~= a[2] then return 0 end 
+	local exp = a[2]
+	if exp > 1.7976931348623157e308 then
+		exp = 1.7976931348623157e308
+	end
+	if a[1] == 0 or exp <= 0 then return 0 end
+	return (math.log10(exp + 1) + 1) * 4503599627370496 * val[1]
+end
+
+function BigNum.lbdecode(val: number): BigNum
+	if val == 0 then return {0,0} end
+	local s = math.sign(val)
+	val = math.abs(val)
+	local toBig = {1, 10^(val/4503599627370496-1)-1}
+	toBig = BigNum.sub(toBig, 1)
+	toBig[2] = math.floor(toBig[2] * 100 + 0.001) / 100
+	return {s, toBig[2]}
 end
 
 return BigNum
