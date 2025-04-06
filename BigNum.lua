@@ -355,12 +355,11 @@ function BigNum.shortE(val, digits): string
 	local man, exp = val[1], val[2]
 	local lf = math.fmod(exp, 3)
 	local index = 0
-	exp = math.floor(exp)
 	while exp >= 1e3 do
 		exp/=1e3
 		index +=1
 	end
-	man = BigNum.showDigits(man * 10^lf, digits)
+	man = BigNum.showDigits(man ^lf, digits)
 	if index == 1 then
 		return man .. 'e' .. exp .. 'k'
 	elseif index == 2 then
@@ -490,6 +489,15 @@ function BigNum.lbdecode(val: number): BigNum
 	toBig = BigNum.sub(toBig, 1)
 	toBig[2] = math.floor(toBig[2] * 100 + 0.001) / 100
 	return {s, toBig[2]}
+end
+
+function BigNum.Combine(val, digit, canComma): string
+	if BigNum.meeq(val, {1, 1e100}) then
+		return BigNum.HyperE(val)
+	elseif BigNum.meeq(val, {1, 1e10}) then
+		return BigNum.shortE(val, digit)
+	else return BigNum.short(val, digit, canComma)
+	end
 end
 
 return BigNum
