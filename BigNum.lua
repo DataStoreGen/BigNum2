@@ -139,11 +139,12 @@ end
 
 function BigNum.pow(val1, val2): BigNum
 	val1, val2 = BigNum.convert(val1), BigNum.convert(val2)
-	local lg10 = math.log10(val1[1]+val1[2])
-	local exp = val2[1]*10^val2[2]
-	local lg2 = lg10*exp
-	local man = 10^(lg2%1)
-	return BigNum.new(man, lg2)
+	local lg10 = math.log10(val1[1]) + val1[2]
+	local exponent = val2[1] * 10^val2[2]
+	local rlog = lg10 * exponent
+	local exp = math.floor(rlog)
+	local man = 10 ^ (rlog - exp)
+	return BigNum.new(man, exp)
 end
 
 function BigNum.log(val1, val2): BigNum
