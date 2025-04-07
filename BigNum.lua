@@ -40,14 +40,14 @@ function BigNum.convert(value): BigNum
 		local man, exp = string.match(value, '([-+%d%.]+)[eE]([-+]?%d+)')
 		if man and exp then
 			man, exp = tonumber(man), tonumber(exp)
-			return {man, exp}
+			return BigNum.new(man, exp)
 		end
 		warn('Failed to find e or convert "" into BigNum')
 		return {0, 0}
 	elseif type(value) == 'number' then
 		local exp = math.floor(math.log10(value))
 		local man = value/10^exp
-		return {man, exp}
+		return BigNum.new(man, exp)
 	elseif type(value) == 'table' then
 		return {value[1], value[2]}
 	end
@@ -182,6 +182,18 @@ function BigNum.root(val1, val2)
 	return BigNum.new(man1^(1/root), exp1/root)
 end
 
+function BigNum.plog10(val1, val2)
+	return BigNum.log10(BigNum.pow(val1, val2))
+end
+
+function BigNum.plog(val1, val2, log)
+	return BigNum.log(BigNum.pow(val1, val2), log)
+end
+
+function BigNum.p10log10(val)
+	return BigNum.log10(BigNum.pow10(val))
+end
+
 function BigNum.mod(val1, val2): BigNum
 	val1, val2 = BigNum.convert(val1), BigNum.convert(val2)
 	local result = BigNum.sub(val1, BigNum.mul(val2, BigNum.fdiv(val1, val2)))
@@ -282,7 +294,7 @@ function BigNum.short(val, digits, canComma: boolean?): string
 	local SNumber1: number, SNumber: number = val[1], val[2]
 	local leftover = math.fmod(SNumber, 3)
 	SNumber = math.floor(SNumber / 3)-1
-	if SNumber <= -1 then return tostring(BigNum.showDigits(SNumber1 * (10^leftover), digits)) end	
+	if SNumber <= -1 then return tostring(BigNum.showDigits(SNumber1 * (10^leftover) + 0.001, digits)) end	
 	local FirBigNumOnes: {string} = {"", "U","D","T","Qd","Qn","Sx","Sp","Oc","No"}
 	local SecondOnes: {string} = {"", "De","Vt","Tg","qg","Qg","sg","Sg","Og","Ng"}
 	local ThirdOnes: {string} = {"", "Ce", "Du","Tr","Qa","Qi","Se","Si","Ot","Ni"}
@@ -291,15 +303,15 @@ function BigNum.short(val, digits, canComma: boolean?): string
 		if SNumber == 0 or SNumber == 1 then
 			return BigNum.AddComma(val)
 		elseif SNumber == 2 then
-			return tostring(BigNum.showDigits(SNumber1 * (10^leftover), digits)) .. "b"
+			return tostring(BigNum.showDigits(SNumber1 * (10^leftover) +0.001, digits)) .. "b"
 		end
 	else
 		if SNumber == 0 then
-			return tostring(BigNum.showDigits(SNumber1 * (10^leftover), digits)) .. "k"
+			return tostring(BigNum.showDigits(SNumber1 * (10^leftover) +0.001, digits)) .. "k"
 		elseif SNumber == 1 then 
-			return tostring(BigNum.showDigits(SNumber1 * (10^leftover), digits)) .. "m"
+			return tostring(BigNum.showDigits(SNumber1 * (10^leftover) +0.001, digits)) .. "m"
 		elseif SNumber == 2 then
-			return tostring(BigNum.showDigits(SNumber1 * (10^leftover), digits)) .. "b"
+			return tostring(BigNum.showDigits(SNumber1 * (10^leftover) +0.001, digits)) .. "b"
 		end
 	end
 	local txt: string = ""
@@ -331,7 +343,7 @@ function BigNum.short(val, digits, canComma: boolean?): string
 	end
 	if SNumber < 1000 then
 		suffixpart(SNumber)
-		return tostring(BigNum.showDigits(SNumber1 * (10^leftover), digits)) .. txt
+		return tostring(BigNum.showDigits(SNumber1 * (10^leftover) +0.001, digits)) .. txt
 	end
 	for i=#MultOnes,0,-1 do
 		if SNumber >= 10^(i*3) then
@@ -340,7 +352,7 @@ function BigNum.short(val, digits, canComma: boolean?): string
 			SNumber = math.fmod(SNumber, 10^(i*3))
 		end
 	end
-	return tostring(BigNum.showDigits(SNumber1 * (10^leftover), digits)) .. txt
+	return tostring(BigNum.showDigits(SNumber1 * (10^leftover) +0.001, digits)) .. txt
 end
 
 function BigNum.shortE(val, digits): string
@@ -361,7 +373,8 @@ function BigNum.shortE(val, digits): string
 		exp/=1e3
 		index +=1
 	end
-	man = BigNum.showDigits(man*10^lf, digits)
+	man = BigNum.showDigits(man^lf + 0.001, digits)
+	exp = math.floor(exp* 100 + 0.001) / 100
 	if index == 1 then
 		return man .. 'e' .. exp .. 'k'
 	elseif index == 2 then
@@ -378,6 +391,8 @@ function BigNum.HyperE(val): string
 	if math.fmod(exp, 1000) then
 		local newExp = math.floor(math.log10(exp))
 		exp /=10^newExp
+		exp = math.floor(exp * 100 + 0.001) / 100
+		man = math.floor(man * 100 + 0.001) / 100
 		return man .. 'e' .. exp .. 'e' .. newExp
 	end
 	return man ..'e' .. exp
