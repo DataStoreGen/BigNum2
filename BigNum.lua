@@ -2,11 +2,11 @@ type BigNum = {number}
 local BigNum = {}
 
 function BigNum.new(man: number, exp: number): BigNum
-	while math.abs(man) >= 10 do
-		man/=10
+	if man % 1000 == 0 then
+		man/=1000
 		exp+=1
 	end
-	while math.abs(man) < 1 and man ~= 0 do
+	if man < 1 and man ~= 0 then
 		man*=10
 		exp-=1
 	end
@@ -14,8 +14,9 @@ function BigNum.new(man: number, exp: number): BigNum
 end
 
 function BigNum.fromNumber(value: number): BigNum
-	local exp = math.log10(value)
-	return {value/10^exp, exp}
+	local exp = math.floor(math.log10(math.abs(value)))
+	local man = value/(10^exp)
+	return BigNum.new(man, exp)
 end
 
 function BigNum.fromString(value: string): BigNum
@@ -148,6 +149,7 @@ function BigNum.pow(val1, val2): BigNum
 end
 
 function BigNum.log(val1, val2): BigNum
+	val2 = val2 or 2.718281828459045
 	val1, val2 = BigNum.convert(val1), BigNum.convert(val2)
 	local man1, exp1 = val1[1], val1[2]
 	local man2, exp2 = val2[1], val2[2]
@@ -158,7 +160,9 @@ function BigNum.log(val1, val2): BigNum
 end
 
 function BigNum.log10(val): BigNum
-	return BigNum.log(val, 10)
+	val = BigNum.convert(val)
+	local man, exp = val[1], val[2]
+	return BigNum.fromNumber(math.log10(man)+exp)
 end
 
 function BigNum.toNumber(val: BigNum): number
@@ -219,7 +223,7 @@ function BigNum.letterShort(val, digits): string
 		end
 	end
 	local lf = math.fmod(exp, 3)
-	return BigNum.showDigits(man * 10^lf, digits) .. letters
+	return BigNum.showDigits(man * (10^lf) + 0.001) .. letters
 end
 
 function BigNum.chechStatus(exp1, exp2, man1, man2)
@@ -538,6 +542,14 @@ end
 
 function BigNum.buy10(cost, pow): BigNum
 	return BigNum.mul(cost, BigNum.pow10(pow))
+end
+
+function BigNum.rlog(val1, val2, base)
+	return BigNum.log(BigNum.root(val1, val2), base)
+end
+
+function BigNum.rlog10(val1, val2)
+	return BigNum.log10(BigNum.root(val1, val2))
 end
 
 return BigNum
