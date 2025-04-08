@@ -2,7 +2,7 @@ type BigNum = {number}
 local BigNum = {}
 
 function BigNum.new(man: number, exp: number): BigNum
-	if man % 1000 == 0 then
+	while man >= 1000 do
 		man/=1000
 		exp+=1
 	end
