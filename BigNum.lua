@@ -52,7 +52,15 @@ function BigNum.convert(value): BigNum
 		local man = value/10^exp
 		return BigNum.new(man, exp)
 	elseif type(value) == 'table' then
-		return {value[1], value[2]}
+		if #value == 2 then
+			return BigNum.new(value[1], value[2])
+		elseif #value == 1 then
+			local exp = math.floor(math.log10(value))
+			local man = value/10^exp
+			return BigNum.new(man, exp)
+		else
+			return value
+		end
 	end
 	warn('Failed to convert to BigNum')
 	return {0, 0}
@@ -173,7 +181,6 @@ function BigNum.log10(val): BigNum
 end
 
 function BigNum.toNumber(val: BigNum): number
-	val = BigNum.convert(val)
 	return val[1]*10^val[2]
 end
 
@@ -191,6 +198,17 @@ function BigNum.root(val1, val2)
 	local man2, exp2 = val2[1], val2[2]
 	local root = man2*10^exp2
 	return BigNum.new(man1^(1/root), exp1/root)
+end
+
+function BigNum.slog10(val)
+	val = BigNum.convert(val)
+	local count = 0
+	while val[2] > 1 do
+		val = BigNum.log10(val)
+		count += 1
+	end
+	local frac = (math.log10(val[1]) + val[2]) / math.log10(10)
+	return BigNum.fromNumber(count + frac)
 end
 
 function BigNum.plog10(val1, val2)
@@ -224,12 +242,12 @@ function BigNum.letterShort(val, digits): string
 		letters = ""
 	else
 		while group > 0 do
-			local index = (group - 1) % 26 + 1
-			letters = letterTable[index+1] .. letters
-			group = math.floor((group - 1) / 26)
+			local index = math.fmod(group, 26) + 1
+			letters = letterTable[math.fmod(index, 26)] .. letters
+			group = math.floor(group / 26)
 		end
 	end
-	local lf = math.fmod(exp, 3)
+	local lf = exp%3
 	return BigNum.showDigits(man * (10^lf) + 0.001) .. letters
 end
 
