@@ -401,14 +401,13 @@ end
 function BigNum.HyperE(val): string
 	val = BigNum.convert(val)
 	local man, exp = val[1], val[2]
-	if math.fmod(exp, 1000) then
-		local newExp = math.floor(math.log10(exp))
-		exp /=10^newExp
-		exp = math.floor(exp * 100 + 0.001) / 100
-		man = math.floor(man * 100 + 0.001) / 100
-		return man .. 'e' .. exp .. 'e' .. newExp
-	end
-	return man ..'e' .. exp
+	local lf = math.fmod(exp, 3)
+	local newExp = math.log10(exp)
+	exp /=10^math.floor(newExp)
+	exp = math.floor(exp * 10^lf + 0.001) / 100
+	man = math.floor(man * 10^lf+ 0.001) / 100
+	newExp = math.floor(newExp*10^lf + 0.001) / 100
+	return man .. 'e' .. exp .. 'e' .. newExp
 end
 
 function BigNum.AddComma(val): string
