@@ -10,6 +10,8 @@ function BigNum.new(man: number, exp: number): BigNum
 		man*=10
 		exp-=1
 	end
+	if man == 0/0 then return {-2, 0}end
+	if exp == math.huge or exp == -math.huge then return {1, math.huge} end
 	return {man, math.floor(exp)}
 end
 
@@ -69,6 +71,11 @@ function BigNum.fdiv(val1, val2)
 end
 
 function BigNum.toString(value: BigNum): string
+	if value[1] == -2 then return 'NaN' end
+	if value[1] == 0 then return '0e0' end
+	if value[2] == math.huge then
+		return (if value[2] == -1 then "-" else "") .. "Inf"
+	end
 	return value[1] .. 'e' .. value[2]
 end
 
@@ -295,6 +302,8 @@ end
 function BigNum.short(val, digits, canComma: boolean?): string
 	canComma = canComma or false
 	val = BigNum.convert(val)
+	if val[1] == -2 then return "NaN" end
+	if val[2] == 1e309 then return "Inf" end
 	local SNumber1: number, SNumber: number = val[1], val[2]
 	local leftover = math.fmod(SNumber, 3)
 	SNumber = math.floor(SNumber / 3)-1
