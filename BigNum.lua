@@ -221,7 +221,7 @@ function BigNum.letterShort(val, digits): string
 	local group = math.floor(exp / 3)
 	local letters = ""
 	if group == 0 then
-		letters = "a"
+		letters = ""
 	else
 		while group > 0 do
 			local index = (group - 1) % 26 + 1
@@ -302,8 +302,8 @@ end
 function BigNum.short(val, digits, canComma: boolean?): string
 	canComma = canComma or false
 	val = BigNum.convert(val)
-	if val[1] == -2 then return "NaN" end
-	if val[2] == 1e309 then return "Inf" end
+	if val[1] == -2 then return "NaN" end 
+	if val[2] == 1e309 then return "inf" end 
 	local SNumber1: number, SNumber: number = val[1], val[2]
 	local leftover = math.fmod(SNumber, 3)
 	SNumber = math.floor(SNumber / 3)-1
@@ -401,13 +401,15 @@ end
 function BigNum.HyperE(val): string
 	val = BigNum.convert(val)
 	local man, exp = val[1], val[2]
-	local lf = math.fmod(exp, 3)
-	local newExp = math.log10(exp)
-	exp /=10^math.floor(newExp)
-	exp = math.floor(exp * 10^lf + 0.001) / 100
-	man = math.floor(man * 10^lf+ 0.001) / 100
-	newExp = math.floor(newExp*10^lf + 0.001) / 100
-	return man .. 'e' .. exp .. 'e' .. newExp
+	if exp >= 1000 then
+		local newExp = math.floor(math.log10(exp))
+		local lf = math.fmod(newExp, 3)
+		exp /= 10^newExp
+		exp = math.floor(exp*100+0.001)/100
+		newExp = math.floor(newExp*100+0.001)/100
+		return man .. 'e' .. exp .. 'e' ..  newExp
+	end
+	return man .. 'e' .. exp
 end
 
 function BigNum.AddComma(val): string
