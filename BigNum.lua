@@ -549,4 +549,20 @@ function BigNum.rlog10(val1, val2): BigNum
 	return BigNum.log10(BigNum.root(val1, val2))
 end
 
+function BigNum.proot10(val1, val2)
+	return BigNum.root(BigNum.pow(val1, val2), 10)
+end
+
+function BigNum.proot(val1, val2, root)
+	return BigNum.root(BigNum.pow(val1, val2), root)
+end
+
+function BigNum.rootp(val1, val2, pow)
+	return BigNum.pow(BigNum.root(val1, val2), pow)
+end
+
+function BigNum.rootp10(val1, val2)
+	return BigNum.pow(BigNum.root(val1, val2), 10)
+end
+
 return BigNum
