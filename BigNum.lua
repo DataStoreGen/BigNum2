@@ -398,15 +398,12 @@ end
 function BigNum.HyperE(val): string
 	val = BigNum.convert(val)
 	local man, exp = val[1], val[2]
-	if exp >= 1000 then
-		local newExp = math.floor(math.log10(exp))
-		local lf = math.fmod(newExp, 3)
-		exp /= 10^newExp
-		exp = math.floor(exp*100+0.001)/100
-		newExp = math.floor(newExp*100+0.001)/100
-		return man .. 'e' .. exp .. 'e' ..  newExp
-	end
-	return man .. 'e' .. exp
+	local newExp = math.floor(math.log10(exp))
+	local lf = math.fmod(newExp, 3)
+	exp /= 10^newExp
+	exp = math.floor(exp*100+0.001)/100
+	newExp = math.floor(newExp*100+0.001)/100
+	return man .. 'e' .. exp .. 'e' ..  newExp
 end
 
 function BigNum.AddComma(val): string
@@ -550,22 +547,6 @@ end
 
 function BigNum.rlog10(val1, val2): BigNum
 	return BigNum.log10(BigNum.root(val1, val2))
-end
-
-function BigNum.rpow(val1, val2, base): BigNum
-	return BigNum.root(BigNum.pow(val1, val2), base)
-end
-
-function BigNum.proot(val1, val2, base): BigNum
-	return BigNum.pow(BigNum.root(val1, val2), base)
-end
-
-function BigNum.rpow10(val1, val2)
-	return BigNum.rpow(val1, val2, 10)
-end
-
-function BigNum.proot10(val1, val2)
-	return BigNum.proot(val1, val2, 10)
 end
 
 return BigNum
