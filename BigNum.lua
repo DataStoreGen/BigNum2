@@ -489,24 +489,50 @@ end
 
 function BigNum.lbencode(val): number
 	val = BigNum.convert(val)
-	local a = BigNum.add({1, val[2]}, 1)
-	if a[2] ~= a[2] then return 0 end 
-	local exp = a[2]
-	if exp > 1.7976931348623157e308 then
-		exp = 1.7976931348623157e308
+	local man, exp = val[1], val[2]
+	if man == 0 then return 4e18 end
+	if exp >= 308 then
+		local layer = math.floor(exp / 308)
+		local sub_exp = exp%308
+		return 6e18 + layer * 1e12 + sub_exp * 1e6 + man
 	end
-	if a[1] == 0 or exp <= 0 then return 0 end
-	return (math.log10(exp + 1) + 1) * 4503599627370496 * val[1]
+	local sign = (man<0) and 1 or 2
+	local val = sign*1e18
+	local fact = exp*1e14
+	local log = math.log10(math.abs(man))*1e13
+	if sign == 2 then
+		val += fact+log
+	elseif sign == 1 then
+		val+=fact+log
+		val=1e17-val
+	end
+	return val
 end
 
 function BigNum.lbdecode(val: number): BigNum
-	if val == 0 then return {0,0} end
-	local s = math.sign(val)
-	val = math.abs(val)
-	local toBig = {1, 10^(val/4503599627370496-1)-1}
-	toBig = BigNum.sub(toBig, 1)
-	toBig[2] = math.floor(toBig[2] * 100 + 0.001) / 100
-	return {s, toBig[2]}
+	if val == 4e18 then
+		return {0,0}
+	end
+	if val >= 6e18 then
+		local layer = math.floor((val - 6e18) / 1e12)
+		local sub_exp = math.floor((val % 1e12) / 1e6)
+		local log = (val % 1e6) / 1e3
+		local man = 10 ^ log
+		local exp = layer * 308 + sub_exp
+		return {man, math.floor(exp*100 + 0.001)/ 100}
+	end
+	local sign = math.floor(val/1e18)
+	local v = (sign ==1) and (1e18-val) or (val-2e18)
+	local exp = math.floor(v/1e14)
+	local log = (v%1e14)/1e13
+	local exp = math.floor(v/1e14)
+	local man = 10^((v%1e14)/1e13)
+	if sign == 1 then
+		return BigNum.new(-man, exp)
+	elseif sign == 2 then
+		return BigNum.new(man, exp)
+	end
+	return {1, 1e309}
 end
 
 function BigNum.Combine(val, digit, canComma): string
