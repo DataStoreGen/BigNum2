@@ -230,27 +230,6 @@ function BigNum.mod(val1, val2): BigNum
 	return BigNum.new(val1[1]%val2[1], 0)
 end
 
-local letterTable = {
-	'','a', 'b', 'c' ,'d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'
-}
-function BigNum.letterShort(val, digits): string
-	val = BigNum.convert(val)
-	local man, exp = val[1], val[2]
-	local group = math.floor(exp / 3)
-	local letters = ""
-	if group == 0 then
-		letters = ""
-	else
-		while group > 0 do
-			local index = math.fmod(group, 26) + 1
-			letters = letterTable[math.fmod(index, 26)] .. letters
-			group = math.floor(group / 26)
-		end
-	end
-	local lf = exp%3
-	return BigNum.showDigits(man * (10^lf) + 0.001) .. letters
-end
-
 function BigNum.chechStatus(exp1, exp2, man1, man2)
 	if exp1 > exp2 then
 		man2 *= 10^(exp2-exp1)
@@ -451,13 +430,6 @@ function BigNum.fshortE(val, digit): string
 	return BigNum.shortE(val, digit)
 end
 
-function BigNum.fLetter(val, digit): string
-	if BigNum.between(val, 0, 1) then
-		return '1/' .. BigNum.letterShort(BigNum.div(1, val), digit)
-	end
-	return BigNum.letterShort(val, digit)
-end
-
 function BigNum.fHyperE(val): string
 	if BigNum.between(val, 0, 1) then
 		return '1/' .. BigNum.HyperE(BigNum.div(1, val))
@@ -572,12 +544,28 @@ function BigNum.buy10(cost, pow): BigNum
 	return BigNum.mul(cost, BigNum.pow10(pow))
 end
 
-function BigNum.rlog(val1, val2, base)
+function BigNum.rlog(val1, val2, base): BigNum
 	return BigNum.log(BigNum.root(val1, val2), base)
 end
 
-function BigNum.rlog10(val1, val2)
+function BigNum.rlog10(val1, val2): BigNum
 	return BigNum.log10(BigNum.root(val1, val2))
+end
+
+function BigNum.rpow(val1, val2, base): BigNum
+	return BigNum.root(BigNum.pow(val1, val2), base)
+end
+
+function BigNum.proot(val1, val2, base): BigNum
+	return BigNum.pow(BigNum.root(val1, val2), base)
+end
+
+function BigNum.rpow10(val1, val2)
+	return BigNum.rpow(val1, val2, 10)
+end
+
+function BigNum.proot10(val1, val2)
+	return BigNum.proot(val1, val2, 10)
 end
 
 return BigNum
